@@ -6,9 +6,30 @@
 
 ---
 
-## Purpose
+Terraform atom that attaches a single AWS managed (or customer-managed) IAM policy to an existing IAM role.
 
-Terraform atom: AWS IAM Role Policy Attachment - attaches a managed policy to an IAM role
+## Features
+
+- Attaches one managed policy ARN to one IAM role via `aws_iam_role_policy_attachment`.
+- Toggle creation on/off with the `enabled` input (creates zero resources when disabled) — safe for conditional composition.
+- Input validation on `role_name` (valid IAM role name characters) and `policy_arn` (valid IAM policy ARN prefix).
+- Full [tf-label](https://github.com/PlatformStackPulse/tf-label) context chaining (`namespace`, `stage`, `name`, `tags`, `context`, ...) for consistent naming and tagging across a stack.
+- Outputs the attached `policy_arn`, the target `role`, and the `enabled` state.
+
+## Usage
+
+```hcl
+module "attach_readonly" {
+  source = "git::https://github.com/PlatformStackPulse/tf-atom-iam-role-policy-attachment-aws.git?ref=v1.0.0"
+
+  namespace = "eg"
+  stage     = "prod"
+  name      = "app"
+
+  role_name  = "eg-prod-app-role"
+  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+}
+```
 
 ## Module Documentation
 
@@ -70,3 +91,18 @@ Terraform atom: AWS IAM Role Policy Attachment - attaches a managed policy to an
 | <a name="output_policy_arn"></a> [policy\_arn](#output\_policy\_arn) | ARN of the attached policy |
 | <a name="output_role"></a> [role](#output\_role) | Name of the role the policy is attached to |
 <!-- END_TF_DOCS -->
+
+## Tests
+
+Unit tests use the Terraform test framework with a mock AWS provider — no real AWS calls or credentials are required.
+
+```bash
+# Unit tests (mock provider, plan-only)
+terraform init -backend=false
+terraform test -test-directory=tests/unit
+
+# Or via the Makefile
+make test-unit
+```
+
+Integration tests (which provision real resources and require AWS credentials) live under `tests/integration` and run with `terraform test -test-directory=tests/integration` (or `make test-integration`).
